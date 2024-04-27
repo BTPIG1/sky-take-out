@@ -1,6 +1,7 @@
 package com.sky.controller.admin;
 
 import com.sky.constant.JwtClaimsConstant;
+import com.sky.dto.EmployeeDTO;
 import com.sky.dto.EmployeeLoginDTO;
 import com.sky.entity.Employee;
 import com.sky.properties.JwtProperties;
@@ -73,6 +74,23 @@ public class EmployeeController {
     @PostMapping("/logout")
     @ApiOperation(value = "员工退出")
     public Result<String> logout() {
+        return Result.success();
+    }
+
+    /*
+    * 根据yapi文档编写接口
+    * @PostMapping（x） 根据请求方式 x为接口路径，这里由于EmployeeController类已经定义了路径，所以这里不需要再定义路径
+    *
+    * */
+    @PostMapping
+    @ApiOperation(value = "新增员工")
+    public Result save(@RequestBody EmployeeDTO employeeDTO){
+        log.info("新增员工：{}", employeeDTO);
+
+        // 当前线程id
+        System.out.println("当前线程id:" + Thread.currentThread().getId());
+
+        employeeService.save(employeeDTO);
         return Result.success();
     }
 
