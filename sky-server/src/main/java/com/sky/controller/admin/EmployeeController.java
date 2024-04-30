@@ -36,7 +36,6 @@ public class EmployeeController {
 
     /**
      * 登录
-     *
      * @param employeeLoginDTO
      * @return
      */
@@ -96,15 +95,31 @@ public class EmployeeController {
 
     /*
     * 员工分页查询
-    * @param employeeQueryDTO
+    * @param EmployeePageQueryDTO
     * return
     * */
     @GetMapping("/page")
     @ApiOperation("员工分页查询")
+    // 查询类需要返回数据，因此要指定泛型<PageResult>
     public Result<PageResult> page(EmployeePageQueryDTO employeePageQueryDTO){
         log.info("员工分页查询：参数为：{}", employeePageQueryDTO);
         // 动态给sql添加limited语句 （页数、大小）
         PageResult pageResult = employeeService.pageQuery(employeePageQueryDTO);
         return Result.success(pageResult);
+    }
+
+    /*
+    *  启用、禁用员工账号
+    * @param status
+    * @param id
+    * return
+    * */
+    @PostMapping("/status/{status}")
+    @ApiOperation("启用、禁用员工账号")
+    // 路径参数@PathVariable读取{status}
+    public Result startOrStop(@PathVariable("status") Integer status,Long id){
+        log.info("启用、禁用员工账号：id={}, status={}", id, status);
+        employeeService.startOrStop(status,id);
+        return Result.success();
     }
 }
