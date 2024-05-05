@@ -47,11 +47,20 @@ public class CategoryServiceImpl implements CategoryService {
         //分类状态默认为禁用状态0
         category.setStatus(StatusConstant.DISABLE);
 
+        /*
+        * 这段代码有问题：重复冗余，因为不同的业务场景都有这段代码，所以应该抽取到一个公共的地方。
+        * 考虑将这段代码抽取到公共的地方，！！让Mapper自动进行填充！！
+        * 实现思路：
+        * 1.自定义注解AutoFill，用于标识需要进行公共字段自动填充的方法
+        * 2.定义一个切面类AutoFillAspect，统一拦截加入了AutoFill注解的方法，通过反射为公共字段赋值
+        * 3.在Mapper的方法上加上AutoFill注解，实现公共字段自动填充
+        * 技术点：枚举、自定义注解、AOP、反射
+        * */
         //设置创建时间、修改时间、创建人、修改人
-        category.setCreateTime(LocalDateTime.now());
+        /*category.setCreateTime(LocalDateTime.now());
         category.setUpdateTime(LocalDateTime.now());
         category.setCreateUser(BaseContext.getCurrentId());
-        category.setUpdateUser(BaseContext.getCurrentId());
+        category.setUpdateUser(BaseContext.getCurrentId());*/
 
         categoryMapper.insert(category);
     }
@@ -99,9 +108,9 @@ public class CategoryServiceImpl implements CategoryService {
         Category category = new Category();
         BeanUtils.copyProperties(categoryDTO,category);
 
-        //设置修改时间、修改人
+       /* //设置修改时间、修改人
         category.setUpdateTime(LocalDateTime.now());
-        category.setUpdateUser(BaseContext.getCurrentId());
+        category.setUpdateUser(BaseContext.getCurrentId());*/
 
         categoryMapper.update(category);
     }
@@ -115,8 +124,8 @@ public class CategoryServiceImpl implements CategoryService {
         Category category = Category.builder()
                 .id(id)
                 .status(status)
-                .updateTime(LocalDateTime.now())
-                .updateUser(BaseContext.getCurrentId())
+                /*.updateTime(LocalDateTime.now())
+                .updateUser(BaseContext.getCurrentId())*/
                 .build();
         categoryMapper.update(category);
     }
