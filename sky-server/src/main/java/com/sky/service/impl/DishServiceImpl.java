@@ -11,6 +11,7 @@ import com.sky.entity.Dish;
 import com.sky.entity.DishFlavor;
 import com.sky.entity.Employee;
 import com.sky.exception.DeletionNotAllowedException;
+import com.sky.exception.SetmealEnableFailedException;
 import com.sky.mapper.DishFlavorMapper;
 import com.sky.mapper.DishMapper;
 import com.sky.mapper.SetmealDishMapper;
@@ -171,5 +172,36 @@ public class DishServiceImpl implements DishService {
             });
             dishFlavorMapper.insertBatch(flavors);
         }
+    }
+
+    /*
+     * 根据分类id查询菜品
+     * @param categoryId
+     * @return
+     * */
+    public List<Dish> list(Long categoryId) {
+        Dish dish = Dish.builder().categoryId(categoryId).build();
+        return dishMapper.list(dish);
+    }
+
+    /*
+    * 启用禁用菜品
+    * @param status
+    * @param id
+    * */
+    public void startOrStop(Integer status, Long id) {
+
+        // 先判断当前菜品是否被套餐关联了
+        List<Long> setmealIds = setmealDishMapper.getSetmealIdsByDishId(id);
+        if(setmealIds!=null && setmealIds.size()>0){
+            // Current dish is associated with a set meal, handle accordingly
+            throw new SetmealEnableFailedException(MessageConstant.DISH_BE_RELATED_BY_SETMEAL);
+        }
+
+        Dish dish = Dish.builder()
+                .id(id)
+                .status(status)
+                .build();
+        dishMapper.update(dish);
     }
 }

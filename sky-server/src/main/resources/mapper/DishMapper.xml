@@ -42,12 +42,6 @@
         where id = #{id}
     </update>
 
-    <delete id="deleteByIds">
-        delete from dish where id in
-        <foreach collection="ids" item="id" open="(" close=")" separator=",">
-            #{id}
-        </foreach>
-    </delete>
 
     <select id="pageQuery" resultType="com.sky.vo.DishVO">
         select dish.*, category.name as categoryName from dish
@@ -65,6 +59,22 @@
         </where>
         #       limit 页码, 每页显示的条数 这里由pageHelper插件实现动态控制
         order by dish.create_time desc
+    </select>
+
+    <select id="list" resultType="Dish" parameterType="Dish">
+        select * from dish
+        <where>
+            <if test="name != null">
+                and name like concat('%', #{name}, '%')
+            </if>
+            <if test="status != null">
+                and status = #{status}
+            </if>
+            <if test="categoryId != null">
+                and category_id = #{categoryId}
+            </if>
+        </where>
+        order by create_time desc
     </select>
 
 
