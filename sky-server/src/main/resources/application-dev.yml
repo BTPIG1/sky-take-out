@@ -12,3 +12,10 @@ sky:
     access-key-secret: dfYTckTYnd0D4d2pJUWk5bqYmOuiGB #dfYTckTYnd0D4d2pJUWk5bqYmOuiGB
     bucket-name: sky-ggbond #sky-ggbond
 #https://oss.console.aliyun.com/bucket/oss-cn-shenzhen/sky-ggbond/object
+
+  redis:
+    host: localhost
+    port: 6379
+    password:
+    #    自动配置了16个数据库
+    database: 10
