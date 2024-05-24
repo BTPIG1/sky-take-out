@@ -19,3 +19,7 @@ sky:
     password:
     #    自动配置了16个数据库
     database: 10
+
+  wechat:
+    appid: wx7e11e435b5848ed3
+    secret: 93c399d541dfc90dc29ad46331241b3e
