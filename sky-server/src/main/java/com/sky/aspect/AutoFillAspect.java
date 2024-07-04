@@ -36,10 +36,11 @@ public class AutoFillAspect {
     * 前置通知，在通知中进行公共字段的赋值
     * */
     @Before("autoFillPointcut()")
+    // JoinPoint: 连接点，程序执行过程中明确的点，一般是方法的调用
     public void autoFill(JoinPoint joinPoint) {
         log.info("开始进行公共字段自动填充...");
 
-        // 获取当前被拦截的方法上的数据库操作类型
+        // 获取当前被拦截的方法上的数据库操作类型。 MethodSignature包括方法名称、返回类型、参数类型等
         MethodSignature signature = (MethodSignature) joinPoint.getSignature(); // 获取方法签名对象
         AutoFill autoFill = signature.getMethod().getAnnotation(AutoFill.class); // 获取方法上的注解对象
         OperationType operationType = autoFill.value();// 获取注解对象上的value值(数据库操作类型)
