@@ -21,6 +21,7 @@ import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
+import com.sky.websocket.WebSocketServer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,6 +62,9 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private WeChatPayUtil weChatPayUtil;
+
+    @Autowired
+    private WebSocketServer webSocketServer;
 
     @Value("${sky.shop.address}")
     private String shopAddress;
@@ -167,12 +171,25 @@ public class OrderServiceImpl implements OrderService {
 
         orderMapper.updateStatus(OrderStatus, OrderPaidStatus, check_out_time, orderid);
 
+
+        // 根据订单号查询订单
+        String outTradeNo = ordersPaymentDTO.getOrderNumber();
+        Orders ordersDB = orderMapper.getByNumber(outTradeNo);
+        // 通过WebSocket通知商家 type orderId content
+        Map map = new HashMap();
+        map.put("type", "1"); // 1表示来单提醒,2表示客户催单
+        map.put("orderId", ordersDB.getId());
+        map.put("content", "订单号：" + outTradeNo + "，用户已支付，请尽快接单");
+
+        String json = JSON.toJSONString(map);
+        webSocketServer.sendToAllClient(json);
+
         return vo;
     }
 
     /**
      * 支付成功，修改订单状态
-     *
+     * 由于没有认证商户，这段代码实际并没有用到，而是用上面代码逻辑跳过支付成功后的回调
      * @param outTradeNo
      */
     public void paySuccess(String outTradeNo) {
@@ -189,6 +206,15 @@ public class OrderServiceImpl implements OrderService {
                 .build();
 
         orderMapper.update(orders);
+
+        // 通过WebSocket通知商家 type orderId content
+        Map map = new HashMap();
+        map.put("type", "1"); // 1表示来单提醒,2表示客户催单
+        map.put("orderId", ordersDB.getId());
+        map.put("content", "订单号：" + outTradeNo + "，用户已支付，请尽快接单");
+
+        String json = JSON.toJSONString(map);
+        webSocketServer.sendToAllClient(json);
     }
 
     public PageResult pageQuery4User(int pageNum, int pageSize, Integer status) {
