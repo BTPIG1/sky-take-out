@@ -1,13 +1,13 @@
 package com.sky.service.impl;
 
+import com.sky.dto.GoodsSalesDTO;
+import com.sky.entity.OrderDetail;
 import com.sky.entity.Orders;
+import com.sky.mapper.OrderDetailMapper;
 import com.sky.mapper.OrderMapper;
 import com.sky.mapper.UserMapper;
 import com.sky.service.ReportService;
-import com.sky.vo.OrderOverViewVO;
-import com.sky.vo.OrderReportVO;
-import com.sky.vo.TurnoverReportVO;
-import com.sky.vo.UserReportVO;
+import com.sky.vo.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +34,9 @@ public class ReportServiceImpl implements ReportService {
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private OrderDetailMapper orderDetailMapper;
 
 
 
@@ -165,6 +168,30 @@ public class ReportServiceImpl implements ReportService {
                 .totalOrderCount(totalOrderCount)
                 .validOrderCount(validOrderCount)
                 .orderCompletionRate(orderCompletionRate)
+                .build();
+    }
+
+    @Override
+    public SalesTop10ReportVO getSalesTop10(LocalDate begin, LocalDate end) {
+        // 查询销量排名前10的商品
+        LocalDateTime beginTime = LocalDateTime.of(begin, LocalTime.MIN);
+        LocalDateTime endTime = LocalDateTime.of(end, LocalTime.MAX);
+        Map map = new HashMap();
+        map.put("begin", beginTime);
+        map.put("end", endTime);
+
+        List<String> NameList = new ArrayList<>();
+        List<Integer> NumberList = new ArrayList<>();
+        // select od.name,sum(od.number) as number from order_detail od,orders o where od.order_id=o.id and o.status=5 and o.create_time between #{begin} and #{end} group by od.name order by number desc limit 10
+        List<GoodsSalesDTO> goodsSalesDTOList = orderDetailMapper.getTop(map);
+        for (GoodsSalesDTO goodsSalesDTO : goodsSalesDTOList) {
+            NameList.add(goodsSalesDTO.getName());
+            NumberList.add(goodsSalesDTO.getNumber());
+        }
+        return SalesTop10ReportVO
+                .builder()
+                .nameList(StringUtils.join(NameList, ","))
+                .numberList(StringUtils.join(NumberList, ","))
                 .build();
     }
 
