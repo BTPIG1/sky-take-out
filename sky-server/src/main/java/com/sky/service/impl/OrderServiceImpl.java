@@ -424,6 +424,7 @@ public class OrderServiceImpl implements OrderService {
         }
         Orders orders = new Orders();
         orders.setId(ordersDB.getId());
+        orders.setDeliveryTime(LocalDateTime.now());
         orders.setStatus(Orders.COMPLETED);
         orderMapper.update(orders);
     }
