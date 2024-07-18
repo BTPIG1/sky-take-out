@@ -7,12 +7,23 @@ import com.sky.mapper.OrderDetailMapper;
 import com.sky.mapper.OrderMapper;
 import com.sky.mapper.UserMapper;
 import com.sky.service.ReportService;
+import com.sky.service.WorkspaceService;
 import com.sky.vo.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -37,6 +48,9 @@ public class ReportServiceImpl implements ReportService {
 
     @Autowired
     private OrderDetailMapper orderDetailMapper;
+
+    @Autowired
+    private WorkspaceService workspaceService;
 
 
 
@@ -193,6 +207,75 @@ public class ReportServiceImpl implements ReportService {
                 .nameList(StringUtils.join(NameList, ","))
                 .numberList(StringUtils.join(NumberList, ","))
                 .build();
+    }
+
+    @Override
+    public void exportBusinessData(HttpServletResponse response) {
+        //1. 查询数据库，获取营业数据--查询最近30天的营业数据
+        LocalDate begin = LocalDate.now().minusDays(30);
+        LocalDate end = LocalDate.now().minusDays(1);
+
+        BusinessDataVO businessDataVO = workspaceService.getBusinessData(LocalDateTime.of(begin, LocalTime.MIN), LocalDateTime.of(end, LocalTime.MAX));
+        //2. 通过POI将数据写入到Excel文件中
+        InputStream in = this.getClass().getClassLoader().getResourceAsStream("template/运营数据报表模板.xlsx");
+
+        try {
+            // 获取excel文件
+            XSSFWorkbook excel = new XSSFWorkbook(in);
+
+            // 获取表格文件的sheet页
+            XSSFSheet sheet = excel.getSheet("Sheet1");
+
+            /*
+            * 填充概览数据
+            * */
+            // 填充数据--时间
+            sheet.getRow(1).getCell(1).setCellValue("时间："+ begin + "至" + end);
+            // 填充数据--营业额
+            sheet.getRow(3).getCell(2).setCellValue(businessDataVO.getTurnover());
+            // 填充数据--订单完成率
+            sheet.getRow(3).getCell(4).setCellValue(businessDataVO.getOrderCompletionRate());
+            // 填充数据--新增用户
+            sheet.getRow(3).getCell(6).setCellValue(businessDataVO.getNewUsers());
+            // 填充数据--有效订单
+            sheet.getRow(4).getCell(2).setCellValue(businessDataVO.getValidOrderCount());
+            // 填充数据--客单价
+            sheet.getRow(4).getCell(4).setCellValue(businessDataVO.getUnitPrice());
+
+            /*
+            * 填充明细数据
+            * */
+            for (int i=0;i<30;i++){
+                LocalDate date = begin.plusDays(i);
+                businessDataVO=workspaceService.getBusinessData(LocalDateTime.of(date, LocalTime.MIN), LocalDateTime.of(date, LocalTime.MAX));
+                // 创建行
+                XSSFRow row = sheet.createRow(i + 7);
+                // 填充数据--时间
+                row.createCell(1).setCellValue(date.toString());
+                // 填充数据--营业额
+                row.createCell(2).setCellValue(businessDataVO.getTurnover());
+                // 填充数据--有效订单
+                row.createCell(3).setCellValue(businessDataVO.getValidOrderCount());
+                // 填充数据--订单完成率
+                row.createCell(4).setCellValue(businessDataVO.getOrderCompletionRate());
+                // 填充数据--客单价
+                row.createCell(5).setCellValue(businessDataVO.getUnitPrice());
+                // 填充数据--新增用户
+                row.createCell(6).setCellValue(businessDataVO.getNewUsers());
+            }
+
+            //3. 通过输出刘将Excel文件下载到客户端
+            ServletOutputStream out = response.getOutputStream();
+            excel.write(out);
+
+            //4. 关闭资源
+            out.close();
+            excel.close();
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
 
